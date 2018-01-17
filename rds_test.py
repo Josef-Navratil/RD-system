@@ -1,14 +1,14 @@
-#Solution to 
+#Solution to Schnackenberg problem with Dirichlet boundary conditions
 import random
 from dolfin import *
 
 # Class representing the intial conditions
 class InitialConditions(Expression):
     def __init__(self, **kwargs):
-        random.seed(-3.0 + MPI.rank(mpi_comm_world()))
+        random.seed(0.1 + MPI.rank(mpi_comm_world()))
     def eval(self, values, x):
-        values[0] = -1.0*(random.random())
-        values[1] = -1.0*(random.random())
+        values[0] = 0.2*(random.random())
+        values[1] = 0.2*(random.random())
     def value_shape(self):
         return (2,)
 
@@ -24,7 +24,7 @@ class RDS(NonlinearProblem):
         assemble(self.a, tensor=A)
 
 
-
+'''
 #Class for boundary conditions
 center = Point(0.0, 0.0)
 radius = 0.05
@@ -40,13 +40,13 @@ class Cylinder(SubDomain):
 
 class Walls(SubDomain):
     def inside(self, x, on_boundary):
-        return (on_boundary and ((x[1] < -1.0+DOLFIN_EPS) or (x[1] > (1.0 - DOLFIN_EPS))))
+        return (on_boundary and ((x[1] < 0.0+DOLFIN_EPS) or (x[1] > (10.0 - DOLFIN_EPS))))
 
 class Walls2(SubDomain):
     def inside(self, x, on_boundary):
-        return (on_boundary and ((x[0] < -1.0+DOLFIN_EPS) or (x[0] > (1.0 - DOLFIN_EPS))))
+        return (on_boundary and ((x[0] < 0.0+DOLFIN_EPS) or (x[0] > (15.0 - DOLFIN_EPS))))
 
-
+'''
 
 
 
@@ -54,7 +54,7 @@ class Walls2(SubDomain):
 
 
 # Model parameters
-dt     = 0.1e-02  # time step
+dt     = 1e-02  # time step
 theta  = 0.5      # time stepping family; theta=1 -> backward Euler, theta=0.5 -> Crank-Nicolson
 
 # Form compiler options
@@ -64,8 +64,8 @@ parameters["form_compiler"]["representation"] = "quadrature"
 
 # Create mesh and define function spaces
 #mesh = UnitSquareMesh(60, 60)
-#mesh = RectangleMesh(Point(0.0,0.0), Point(10.0, 10.0), 75, 75, "right/left")
-mesh=refine(Mesh("mesh.xml"))
+mesh = RectangleMesh(Point(0.0,0.0), Point(10.0, 10.0), 100, 100, "right/left")
+#mesh=refine(Mesh("mesh.xml"))
 V=FiniteElement("Lagrange", mesh.ufl_cell(),1)
 ME = FunctionSpace(mesh, V*V)
 
@@ -84,15 +84,15 @@ u.interpolate(u_init)
 u0.interpolate(u_init)
 #lmbda=0.3
 a=0.1
-b=0.9
+b=0.5
 baa=0.8
-bab=-1
-bba=1.8
+bab=1
+bba=-1.8
 bbb=-1.0
 #d1=0.02
 #d2=0.3
-d1=0.025
-d2=0.040
+d1=1
+d2=2.5
 
 
 #if ((baa*bbb-bab*bba)<0):
@@ -122,15 +122,19 @@ a = derivative(L, u, du)
 
 
 #boundary conditions
-noslip = Constant(0)
-bc0 = DirichletBC(ME.sub(0), noslip, Walls())
-bc1 = DirichletBC(ME.sub(0), noslip, Walls2())
-bc2 = DirichletBC(ME.sub(0), noslip, Cylinder())
-bc3 = DirichletBC(ME.sub(1), noslip, Walls())
-bc4 = DirichletBC(ME.sub(1), noslip, Walls2())
-bc5 = DirichletBC(ME.sub(1), noslip, Cylinder())
-bcs=[bc0, bc1, bc2, bc3, bc4, bc5]
+noslip = Constant((0,0))
+#bc0 = DirichletBC(ME.sub(0), noslip, Walls())
+#bc1 = DirichletBC(ME.sub(0), noslip, Walls2())
+#bc2 = DirichletBC(ME.sub(0), noslip, Cylinder())
+#bc2 = DirichletBC(ME.sub(1), noslip, Walls())
+#bc3 = DirichletBC(ME.sub(1), noslip, Walls2())
+#bc5 = DirichletBC(ME.sub(1), noslip, Cylinder())
+#bcs=[bc0, bc1, bc2, bc3]
 
+
+def boundary(x, on_boundary):
+    return on_boundary
+bcs = DirichletBC(ME, noslip, boundary)
 
 
 
@@ -156,7 +160,7 @@ t = dt
 T = 2000*dt
 k=0
 while (t < T):
-    print("t=%f", t)
+    print("t=%f, iteration=%i" %(t,k))
     solver.solve()
     end()
     if k%4==0:
