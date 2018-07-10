@@ -276,7 +276,8 @@ while (k < 6000):
         ufile << (u0.split()[1], t)
 dt=150
 ufile << (u0.split()[1], t)
-'''
+if t>T:
+    exit()
 while (t < 2000000):
     print("t=%f, iteration=%i" %(t,k))
     solver.solve()
@@ -286,6 +287,8 @@ while (t < 2000000):
     t += dt
 ufile << (u0.split()[1], t)
 dt=200
+if t>T:
+    exit()
 while (t < T):
     print("t=%f, iteration=%i" %(t,k))
     solver.solve()
@@ -295,7 +298,7 @@ while (t < T):
     k+=1
     u0.assign(u)
     t += dt
-
+'''
 print("t=%f, iteration=%i" %(t,k))
 solver.solve()
 end()
