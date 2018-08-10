@@ -29,7 +29,7 @@ class RDS(NonlinearProblem):
 
 
 # Model parameters
-dt     = 0.2  # time step
+dt     = 0.1  # time step
 theta  = 0.5      # time stepping family; theta=1 -> backward Euler, theta=0.5 -> Crank-Nicolson
 
 # Form compiler options
@@ -41,7 +41,7 @@ parameters["form_compiler"]["representation"] = "quadrature"
 mesh = RectangleMesh(Point(0.0,0.0), Point(15.0, 10.0), 100, 100, "right/left")
 #mesh = UnitSquareMesh(60, 60)
 #mesh=refine(Mesh("mesh.xml"))
-V  = FiniteElement("Lagrange", mesh.ufl_cell(),1)
+V=FiniteElement("Lagrange", mesh.ufl_cell(),1)
 ME = FunctionSpace(mesh, V*V)
 VE = FunctionSpace(mesh, V)
 # Define trial and test functions
@@ -64,12 +64,12 @@ u0.interpolate(u_init)
 
 
 # Load parameters from console
-d1  = float(argv[1])
-d2  = float(argv[2])
-T   = float(argv[3])
-BC  = argv[4]
-Kin = argv[5]
-n_iter = int(argv[6])
+d1=float(argv[1])
+d2=float(argv[2])
+T=float(argv[3])
+BC=argv[4]
+Kin=argv[5]
+n_iter=int(argv[6])
 
 
 # Define source functions
@@ -83,13 +83,13 @@ f_3 = Expression('1.0*(exp(-pow(x[0]-3.0,2)-pow(x[1]-3.0,2))-0.1054)', degree=1)
 '''
 
 # Milder sources
-f_1  = Expression('pow(x[0]-11.0,2)+pow(x[1]-6.0,2)<16 ? 1.0 : 0',
+f_1 = Expression('pow(x[0]-11.0,2)+pow(x[1]-6.0,2)<16 ? 1.0 : 0',
                  degree=1)
 f_10 = Expression('pow(x[0]-3.0,2)+pow(x[1]-3.0,2)<16 ? 1.0 : 0',
                  degree=1)
 
-f_2  = Expression('1.0*(exp(-0.25*pow(x[0]-11.0,2)-0.25*pow(x[1]-6.0,2))-0.0111)', degree=1)
-f_3  = Expression('1.0*(exp(-0.25*pow(x[0]-3.0,2)-0.25*pow(x[1]-3.0,2))-0.0111)', degree=1)
+f_2 = Expression('1.0*(exp(-0.25*pow(x[0]-11.0,2)-0.25*pow(x[1]-6.0,2))-0.0111)', degree=1)
+f_3 = Expression('1.0*(exp(-0.25*pow(x[0]-3.0,2)-0.25*pow(x[1]-3.0,2))-0.0111)', degree=1)
 
 
 
@@ -107,14 +107,14 @@ v0, w0 = split(u0)
 
 # Weak statement of the equations 
 # Schnackenberg kinetics
-if Kin == 'SCH':
-    # Define Schnackenberg kinetics parameters
-    a = 0.1
-    b = 0.85
-    baa = (-1+2*b/(a+b))
-    bab = (a+b)*(a+b)
-    bba = -2*b/(a+b)
-    bbb = -(a+b)*(a+b)
+if Kin=='SCH':
+    # Define parameters
+    a=0.1
+    b=0.85
+    baa=(-1+2*b/(a+b))
+    bab=(a+b)*(a+b)
+    bba=-2*b/(a+b)
+    bbb=-(a+b)*(a+b)
     
     L0 = d1*dt*inner(grad(v0), grad(p))*dx - dt*baa*v0*p*dx - dt*bab*w0*p*dx - 2*(a+b)*dt*v0*w0*p*dx - (b/(a+b)*(a+b))*dt*v0*v0*p*dx - dt*v0*v0*w0*p*dx
     L1 = d1*dt*inner(grad(v), grad(p))*dx - dt*baa*v*p*dx - dt*bab*w*p*dx - 2*(a+b)*dt*v*w*p*dx- (b/(a+b)*(a+b))*dt*v*v*p*dx - dt*v*v*w*p*dx
@@ -122,12 +122,12 @@ if Kin == 'SCH':
     M1 = d2*dt*inner(grad(w), grad(q))*dx - dt*bba*v*q*dx - dt*bbb*w*q*dx + 2*(a+b)*dt*v*w*q*dx+ (b/(a+b)*(a+b))*dt*v*v*q*dx + dt*v*v*w*q*dx +f_1*f_2*0.5*dt*(1-sign(w))*w*q*dx+f_10*f_3*0.5*dt*(1+sign(w))*w*q*dx
     L =  v*p*dx - v0*p*dx+ w*q*dx - w0*q*dx + theta*L1 + (1-theta)*L0 + theta*M1 + (1-theta)*M0
 # FitzHugh-Nagumo Kinetics
-elif Kin == 'F':
-    # Define FHN linear kinetics parameters
-    baa = 0.6
-    bab = -4.5
-    bba = 1.5
-    bbb = -2
+elif Kin=='F':
+    # Define parameters
+    baa=0.6
+    bab=-4.5
+    bba=1.5
+    bbb=-2
     
     # Variational form of the problem
     L0 = d1*dt*inner(grad(v0), grad(p))*dx - dt*baa*v0*p*dx - dt*bab*w0*p*dx 
@@ -137,12 +137,12 @@ elif Kin == 'F':
     L =  v*p*dx - v0*p*dx+ w*q*dx - w0*q*dx + theta*L1 + (1-theta)*L0 + theta*M1 + (1-theta)*M0
 
 # Thomas kinetics
-elif Kin == 'T':
+elif Kin=='T':
     # Define parameters
-    baa = 6
-    bab = -45
-    bba = 15
-    bbb = -20
+    baa=6
+    bab=-45
+    bba=15
+    bbb=-20
     
     # Variational form of the problem    
     L0 = d1*dt*inner(grad(v0), grad(p))*dx - dt*baa*v0*p*dx - dt*bab*w0*p*dx + rd*dt*v0*w0*p*dx + baa*rt*dt*v0*w0*w0*p*dx
@@ -152,14 +152,14 @@ elif Kin == 'T':
     L =  v*p*dx - v0*p*dx+ w*q*dx - w0*q*dx + theta*L1 + (1-theta)*L0 + theta*M1 + (1-theta)*M0
 
 # Liu-Liaw-Maini kinetics
-elif Kin == 'LLM':
+elif Kin=='LLM':
     # Define parameters
-    baa = 0.899
-    bab = 1
-    bba = -0.899
-    bbb = -0.91
-    rd  = 2
-    rt  = 3.5
+    baa=0.899
+    bab=1
+    bba=-0.899
+    bbb=-0.91
+    rd=2
+    rt=3.5
     
     # Variational form of the problem   
     L0 = d1*dt*inner(grad(v0), grad(p))*dx - dt*baa*v0*p*dx - dt*bab*w0*p*dx + rd*dt*v0*w0*p*dx + baa*rt*dt*v0*w0*w0*p*dx
@@ -176,13 +176,13 @@ else:
 
 
 # Verify Turing instability conditions
-if ((baa*bbb-bab*bba) < 0):
+if ((baa*bbb-bab*bba)<0):
 	print("Det B is negative!")
 
-if ((baa+bbb) > 0):
+if ((baa+bbb)>0):
 	print("Tr B is positive!")
 
-if ((baa < 0) or (bbb > 0) or (bba*bab > 0)):
+if ((baa<0) or (bbb>0) or (bba*bab>0)):
 	print("Wrong coefficients signs")
 	
 
@@ -194,15 +194,15 @@ a = derivative(L, u, du)
 
 # Boundary conditions
 # Dirichlet boundary conditions
-if BC == 'D':
+if BC=='D':
     Dirchlt = Constant((0,0))
     def boundary(x, on_boundary):
         return on_boundary
     bcs = DirichletBC(ME, Dirchlt, boundary)
 
 # Neumann boundary conditions
-elif BC == 'N':
-    bcs = []
+elif BC=='N':
+    bcs=[]
 
 else:
     print("Wrong choice of boundary conditions")
@@ -216,8 +216,8 @@ else:
 #solver.parameters["relative_tolerance"] = 1e-6
 
 # Output file
-file_location  = "results%.2f-%.2f-%s"%(d1,d2,Kin)+"/output.pvd"
-file_location2 = "results%.2f-%.2f-%s"%(d1,d2,Kin)+"/output2.pvd"
+file_location="resultsSO-%.3f-%.3f-%s-%s"%(d1,d2,Kin,BC)+"/output.pvd"
+file_location2="resultsSO-%.3f-%.3f-%s-%s"%(d1,d2,Kin,BC)+"/output2.pvd"
 ufile = File(file_location, "compressed")
 vfile = File(file_location2, "compressed")
 
@@ -229,17 +229,17 @@ solver.parameters['newton_solver']['maximum_iterations'] = 15
 # Step in time
 t = dt
 
-k = 0
+k=0
 while (k < 50):
     print("t=%f, iteration=%i" %(t,k))
     solver.solve()
     end()
-    k+ = 1
+    k+=1
     u0.assign(u)
     t += dt
-if t > T:
+if t>T:
     exit()
-dt = 2.0
+dt=0.5
 ufile << (u0.split()[1], t)
 if t>T:
     sys.exit()
@@ -247,58 +247,70 @@ while (k < 1000):
     print("t=%f, iteration=%i" %(t,k))
     solver.solve()
     end()
-    k+ = 1
+    k+=1
     u0.assign(u)
     t += dt
-dt=8.0
-if t > T:
+dt=1.0
+if t>T:
     exit()
 ufile << (u0.split()[1], t)
 while (k < 1500):
     print("t=%f, iteration=%i" %(t,k))
     solver.solve()
     end()
-    k += 1
+    k+=1
     u0.assign(u)
     t += dt
-dt=50
-ufile << (u0.split()[1], t)
-if t > T:
-    exit()
-while (k < 6000):
+#    if(k%10==0):
+#        ufile << (u0.split()[1], t)
+dt=1.5
+wh1le (k < 4800):
     print("t=%f, iteration=%i" %(t,k))
     solver.solve()
     end()
-    k += 1
+    k+=1
     u0.assign(u)
     t += dt
-    if((k%20 == 0) and (k > 5000)):
-        ufile << (u0.split()[1], t)
-dt = 150
 ufile << (u0.split()[1], t)
-if t > T:
-    exit()
+#if t>T:
+#    exit()
+dt=3.0
+ufile << (u0.split()[1], t)
+#if t>T:
+#    exit()
+while (k < T):
+    print("t=%f, iteration=%i" %(t,k))
+    solver.solve()
+    end()
+    k+=1
+    u0.assign(u)
+    t += dt
+    if(k%10==0):
+        ufile << (u0.split()[1], t)
+#    if((k%20==0) and (k>5000)):
+#        ufile << (u0.split()[1], t)
+dt=150
+ufile << (u0.split()[1], t)
+'''
 while (t < 2000000):
     print("t=%f, iteration=%i" %(t,k))
     solver.solve()
     end()
-    k += 1
+    k+=1
     u0.assign(u)
     t += dt
 ufile << (u0.split()[1], t)
-dt = 200
-if t > T:
-    exit()
+dt=200
 while (t < T):
     print("t=%f, iteration=%i" %(t,k))
     solver.solve()
     end()
-    if((k%20 == 0) and (t > 3400000)):
+    if((k%20==0) and (t>3400000)):
         ufile << (u0.split()[1], t)
-    k += 1
+    k+=1
     u0.assign(u)
     t += dt
-'''
+
 print("t=%f, iteration=%i" %(t,k))
 solver.solve()
 end()
@@ -314,10 +326,10 @@ while (t < T):
     file << (u.split()[0], t)
     solver.solve(problem, u.vector())
     u
-    if k%4 == 0:
+    if k%4==0:
 	    file << (u.split()[0], t)
     k+=1
-if k%4 != 0:
+if k%4!=0:
     file << (u.split()[0], t)
 plot(u.split()[0])
 interactive() 
