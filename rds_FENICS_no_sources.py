@@ -4,6 +4,7 @@ from dolfin import *
 import shutil #package to remove old results directory
 from sys import argv
 from sys import exit
+from os import remove
 # Class representing the intial conditions
 class InitialConditions(Expression):
     def __init__(self, **kwargs):
@@ -196,8 +197,8 @@ else:
 #solver.parameters["relative_tolerance"] = 1e-6
 
 # Output file
-file_location="resultsSO-%.3f-%.3f-%s-%s"%(d1,d2,Kin,BC)+"/output.pvd"
-file_location2="resultsSO-%.3f-%.3f-%s-%s"%(d1,d2,Kin,BC)+"/output2.pvd"
+file_location="results-%.3f-%.3f-%s-%s"%(d1,d2,Kin,BC)+"/output.pvd"
+file_location2="results-%.3f-%.3f-%s-%s"%(d1,d2,Kin,BC)+"/output2.pvd"
 ufile = File(file_location, "compressed")
 vfile = File(file_location2, "compressed")
 
@@ -210,13 +211,20 @@ solver.parameters['newton_solver']['maximum_iterations'] = 15
 t = dt
 
 k=0
-while (k < 50):
+l=0
+while (k < 400):
     print("t=%f, iteration=%i" %(t,k))
     solver.solve()
     end()
     k+=1
     u0.assign(u)
     t += dt
+    if(k%10==0):
+        if((k//10)>20):
+            remove("results-%.3f-%.3f-%s-%s"%(d1,d2,Kin,BC)+"/output%06d.vtu"%l)
+            l+=1
+        ufile << (u0.split()[1], t)
+'''
 if t>T:
     exit()
 dt=1.0
@@ -266,6 +274,8 @@ while (k < T):
         ufile << (u0.split()[1], t)
 dt=150
 ufile << (u0.split()[1], t)
+'''
+
 '''
 while (t < 2000000):
     print("t=%f, iteration=%i" %(t,k))

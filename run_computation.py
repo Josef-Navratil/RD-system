@@ -8,15 +8,7 @@ import subprocess
 # Options - Kinetics: SCH (Schnackenberg 0.1,0.85), T (Thomas), F (FitzHugh-Nagumo), LLM (Liu-Liaw-Maini) 
 # Options - Sources: So (System with sources), NoSo (System without sources)
 
-RDSParam = [['0.05','0.2','200000','N','LLM','NoSo'],
-           ['0.2','0.6','200000','N','LLM','NoSo'],
-           ['0.3','0.9','200000','N','LLM','NoSo'],
-           ['0.4','0.9','200000','N','LLM','NoSo'],
-           ['0.5','0.9','200000','N','LLM','NoSo'],
-           ['0.6','1.1','200000','N','LLM','NoSo'],
-           ['0.01','0.03','3500000','N','LLM','NoSo'],
-           ['0.01','0.03','3500000','N','LLM','So'],
-           ['0.01','0.03','3500000','N','LLM','So']]
+RDSParam = [['0.05','0.2','800','N','SCH','NoSo']]
 k = 0 #Counts the interations
 
 # make all of the computation
