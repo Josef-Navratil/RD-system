@@ -4,6 +4,7 @@ from dolfin import *
 import shutil #package to remove old results directory
 from sys import argv
 from sys import exit
+from os import remove
 # Class representing the intial conditions
 class InitialConditions(Expression):
     def __init__(self, **kwargs):
@@ -29,7 +30,8 @@ class RDS(NonlinearProblem):
 
 
 # Model parameters
-dt     = 0.1  # time step
+dT = 0.01  # time step
+dt = Constant(dT)
 theta  = 0.5      # time stepping family; theta=1 -> backward Euler, theta=0.5 -> Crank-Nicolson
 
 # Form compiler options
@@ -38,7 +40,7 @@ parameters["form_compiler"]["cpp_optimize"] = True
 parameters["form_compiler"]["representation"] = "quadrature"
 
 # Create mesh and define function spaces
-mesh = RectangleMesh(Point(0.0,0.0), Point(15.0, 10.0), 100, 100, "right/left")
+mesh = RectangleMesh(Point(0.0,0.0), Point(15.0, 10.0), 100, 80, "right/left")
 #mesh = UnitSquareMesh(60, 60)
 #mesh=refine(Mesh("mesh.xml"))
 V=FiniteElement("Lagrange", mesh.ufl_cell(),1)
@@ -69,7 +71,7 @@ d2=float(argv[2])
 T=float(argv[3])
 BC=argv[4]
 Kin=argv[5]
-n_iter=int(argv[6])
+source=float(argv[6])
 
 
 # Define source functions
@@ -88,8 +90,8 @@ f_1 = Expression('pow(x[0]-11.0,2)+pow(x[1]-6.0,2)<16 ? 1.0 : 0',
 f_10 = Expression('pow(x[0]-3.0,2)+pow(x[1]-3.0,2)<16 ? 1.0 : 0',
                  degree=1)
 
-f_2 = Expression('1.0*(exp(-0.25*pow(x[0]-11.0,2)-0.25*pow(x[1]-6.0,2))-0.0111)', degree=1)
-f_3 = Expression('1.0*(exp(-0.25*pow(x[0]-3.0,2)-0.25*pow(x[1]-3.0,2))-0.0111)', degree=1)
+f_2 = Expression('{0}*(exp(-0.25*pow(x[0]-11.0,2)-0.25*pow(x[1]-6.0,2))-0.0111)'.format(source), degree=1)
+f_3 = Expression('{0}*(exp(-0.25*pow(x[0]-3.0,2)-0.25*pow(x[1]-3.0,2))-0.0111)'.format(source), degree=1)
 
 
 
@@ -115,7 +117,6 @@ if Kin=='SCH':
     bab=(a+b)*(a+b)
     bba=-2*b/(a+b)
     bbb=-(a+b)*(a+b)
-    
     L0 = d1*dt*inner(grad(v0), grad(p))*dx - dt*baa*v0*p*dx - dt*bab*w0*p*dx - 2*(a+b)*dt*v0*w0*p*dx - (b/(a+b)*(a+b))*dt*v0*v0*p*dx - dt*v0*v0*w0*p*dx
     L1 = d1*dt*inner(grad(v), grad(p))*dx - dt*baa*v*p*dx - dt*bab*w*p*dx - 2*(a+b)*dt*v*w*p*dx- (b/(a+b)*(a+b))*dt*v*v*p*dx - dt*v*v*w*p*dx
     M0 = d2*dt*inner(grad(w0), grad(q))*dx - dt*bba*v0*q*dx - dt*bbb*w0*q*dx + 2*(a+b)*dt*v0*w0*q*dx+(b/(a+b)*(a+b))*dt*v0*v0*q*dx +dt*v0*v0*w0*q*dx +f_1*f_2*0.5*dt*(1-sign(w0))*w0*q*dx+f_10*f_3*0.5*dt*(1+sign(w0))*w0*q*dx
@@ -216,121 +217,69 @@ else:
 #solver.parameters["relative_tolerance"] = 1e-6
 
 # Output file
-file_location="resultsSO-%.3f-%.3f-%s-%s"%(d1,d2,Kin,BC)+"/output.pvd"
-file_location2="resultsSO-%.3f-%.3f-%s-%s"%(d1,d2,Kin,BC)+"/output2.pvd"
+file_location="resultsSO-%.3f-%.3f-%s-%s-%.1f"%(d1,d2,Kin,BC, source)+"/output.pvd"
+file_location2="resultsSO-%.3f-%.3f-%s-%s-%.1f"%(d1,d2,Kin,BC, source)+"/output2.pvd"
 ufile = File(file_location, "compressed")
 vfile = File(file_location2, "compressed")
 
 problem = NonlinearVariationalProblem(L, u, bcs, J)
 solver  = NonlinearVariationalSolver(problem)
-solver.parameters['newton_solver']['maximum_iterations'] = 15
+solver.parameters['newton_solver']['maximum_iterations'] = 20
 
 
 # Step in time
-t = dt
+t = float(dt)
+dt_change = 1.5
+dT = float(dt)
+k = 0
+u1_vec = u0.vector()
+no_of_files = 0
+file_path = "resultsSO-%.3f-%.3f-%s-%s-%.1f"%(d1,d2,Kin,BC, source)+"/error.txt"
+print(file_path)
+error_file = open(file_path, 'w', buffering = 1)
+err = 1
 
-k=0
-while (k < 50):
-    print("t=%f, iteration=%i" %(t,k))
-    solver.solve()
+while True:
+    print("t=%f, iteration=%i, step=%f" %(t,k,dt))
+    (no_of_iterations,converged) = solver.solve()
     end()
     k+=1
-    u0.assign(u)
-    t += dt
-if t>T:
-    exit()
-dt=0.5
-ufile << (u0.split()[1], t)
-if t>T:
-    sys.exit()
-while (k < 1000):
-    print("t=%f, iteration=%i" %(t,k))
-    solver.solve()
-    end()
-    k+=1
-    u0.assign(u)
-    t += dt
-dt=1.0
-if t>T:
-    exit()
-ufile << (u0.split()[1], t)
-while (k < 1500):
-    print("t=%f, iteration=%i" %(t,k))
-    solver.solve()
-    end()
-    k+=1
-    u0.assign(u)
-    t += dt
-#    if(k%10==0):
-#        ufile << (u0.split()[1], t)
-dt=1.5
-wh1le (k < 4800):
-    print("t=%f, iteration=%i" %(t,k))
-    solver.solve()
-    end()
-    k+=1
-    u0.assign(u)
-    t += dt
-ufile << (u0.split()[1], t)
-#if t>T:
-#    exit()
-dt=3.0
-ufile << (u0.split()[1], t)
-#if t>T:
-#    exit()
-while (k < T):
-    print("t=%f, iteration=%i" %(t,k))
-    solver.solve()
-    end()
-    k+=1
-    u0.assign(u)
-    t += dt
-    if(k%10==0):
-        ufile << (u0.split()[1], t)
-#    if((k%20==0) and (k>5000)):
-#        ufile << (u0.split()[1], t)
-dt=150
-ufile << (u0.split()[1], t)
-'''
-while (t < 2000000):
-    print("t=%f, iteration=%i" %(t,k))
-    solver.solve()
-    end()
-    k+=1
-    u0.assign(u)
-    t += dt
-ufile << (u0.split()[1], t)
-dt=200
-while (t < T):
-    print("t=%f, iteration=%i" %(t,k))
-    solver.solve()
-    end()
-    if((k%20==0) and (t>3400000)):
-        ufile << (u0.split()[1], t)
-    k+=1
-    u0.assign(u)
-    t += dt
+    if converged:
+        if float(dt) > 1e7 or k > 100000 or err < 1e-10:
+            break
+        if k%10==0:
+            u_vec = u.vector()
+            err = norm(u_vec-u1_vec)/norm(u_vec)
+            print(err)
+            error_file.write(str(err)+'\n')
+            
+            if err < 1e-2:
+                dt.assign(Constant(1.5*dT))
+                dT = float(dt)
+                
+            if err > 1.5:
+                dt.assign(Constant(0.5*dT))
+                dT = float(dt)
 
-print("t=%f, iteration=%i" %(t,k))
-solver.solve()
-end()
-vfile << (u0.split()[0], t)
-File('saved_mesh.xml') << mesh
-File('saved_v0.xml') << u0
-File('saved_v.xml') << u
+            if k%20==0:
+                ufile << (u0.split()[1], t)
+                no_of_files += 1
+                if no_of_files >= 100:
+                    count = no_of_files - 100
+                    file_location = "resultsSO-%.3f-%.3f-%s-%s-%.1f"%(d1,d2,Kin,BC, source)+"/output%06d.vtu"%(no_of_files-100)
+                    print(file_location)
+                    remove(file_location)
+            u1_vec = u0.vector()
+        u0.assign(u)
+        t = t + dT
+    else:
+        dt = 0.25*dt
+        
+        
+File("resultsSO-%.3f-%.3f-%s-%s-%.1f/"%(d1,d2,Kin,BC, source)+'saved_mesh.xml') << mesh
+File("resultsSO-%.3f-%.3f-%s-%s-%.1f/"%(d1,d2,Kin,BC, source)+'saved_v0.xml') << u0
+File("resultsSO-%.3f-%.3f-%s-%s-%.1f/"%(d1,d2,Kin,BC, source)+'saved_v.xml') << u
 
-while (t < T):
-   print("t=%f", t)
-    t += dt
-    u0.vector()[:] = u.vector()
-    file << (u.split()[0], t)
-    solver.solve(problem, u.vector())
-    u
-    if k%4==0:
-	    file << (u.split()[0], t)
-    k+=1
-if k%4!=0:
-    file << (u.split()[0], t)
-plot(u.split()[0])
-interactive() 
-'''
+normh1 = str(norm(u,'H1'))
+error_file.write(normh1)
+error_file.close()
