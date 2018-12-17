@@ -30,7 +30,7 @@ class RDS(NonlinearProblem):
 
 
 # Model parameters
-dT = 0.01  # time step
+dT = 0.02  # time step
 dt = Constant(dT)
 theta  = 0.5      # time stepping family; theta=1 -> backward Euler, theta=0.5 -> Crank-Nicolson
 
@@ -241,11 +241,14 @@ err = 1
 
 while True:
     print("t=%f, iteration=%i, step=%f" %(t,k,dt))
-    (no_of_iterations,converged) = solver.solve()
+    try:
+        (no_of_iterations,converged) = solver.solve()
+    except:
+        quit()
     end()
     k+=1
     if converged:
-        if float(dt) > 1e7 or k > 100000 or err < 1e-10:
+        if float(dt) > 1e6 or k > 100000 or err < 1e-8:
             break
         if k%10==0:
             u_vec = u.vector()
@@ -275,7 +278,7 @@ while True:
     else:
         dt = 0.25*dt
         
-        
+
 File("resultsSO-%.3f-%.3f-%s-%s-%.1f/"%(d1,d2,Kin,BC, source)+'saved_mesh.xml') << mesh
 File("resultsSO-%.3f-%.3f-%s-%s-%.1f/"%(d1,d2,Kin,BC, source)+'saved_v0.xml') << u0
 File("resultsSO-%.3f-%.3f-%s-%s-%.1f/"%(d1,d2,Kin,BC, source)+'saved_v.xml') << u
