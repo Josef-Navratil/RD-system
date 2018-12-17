@@ -217,8 +217,8 @@ else:
 #solver.parameters["relative_tolerance"] = 1e-6
 
 # Output file
-file_location="resultsSO-%.3f-%.3f-%s-%s-%.1f"%(d1,d2,Kin,BC, source)+"/output.pvd"
-file_location2="resultsSO-%.3f-%.3f-%s-%s-%.1f"%(d1,d2,Kin,BC, source)+"/output2.pvd"
+file_location="results/results-%.3f-%.3f-%s-%s-%.1f"%(d1,d2,Kin,BC, source)+"/output.pvd"
+file_location2="results/results-%.3f-%.3f-%s-%s-%.1f"%(d1,d2,Kin,BC, source)+"/output2.pvd"
 ufile = File(file_location, "compressed")
 vfile = File(file_location2, "compressed")
 
@@ -234,7 +234,7 @@ dT = float(dt)
 k = 0
 u1_vec = u0.vector()
 no_of_files = 0
-file_path = "resultsSO-%.3f-%.3f-%s-%s-%.1f"%(d1,d2,Kin,BC, source)+"/error.txt"
+file_path = "results/results-%.3f-%.3f-%s-%s-%.1f"%(d1,d2,Kin,BC, source)+"/error.txt"
 print(file_path)
 error_file = open(file_path, 'w', buffering = 1)
 err = 1
@@ -269,7 +269,7 @@ while True:
                 no_of_files += 1
                 if no_of_files >= 100:
                     count = no_of_files - 100
-                    file_location = "resultsSO-%.3f-%.3f-%s-%s-%.1f"%(d1,d2,Kin,BC, source)+"/output%06d.vtu"%(no_of_files-100)
+                    file_location = "results/results-%.3f-%.3f-%s-%s-%.1f"%(d1,d2,Kin,BC, source)+"/output%06d.vtu"%(no_of_files-100)
                     print(file_location)
                     remove(file_location)
             u1_vec = u0.vector()
@@ -279,9 +279,9 @@ while True:
         dt = 0.25*dt
         
 
-File("resultsSO-%.3f-%.3f-%s-%s-%.1f/"%(d1,d2,Kin,BC, source)+'saved_mesh.xml') << mesh
-File("resultsSO-%.3f-%.3f-%s-%s-%.1f/"%(d1,d2,Kin,BC, source)+'saved_v0.xml') << u0
-File("resultsSO-%.3f-%.3f-%s-%s-%.1f/"%(d1,d2,Kin,BC, source)+'saved_v.xml') << u
+File("results/results-%.3f-%.3f-%s-%s-%.1f/"%(d1,d2,Kin,BC, source)+'saved_mesh.xml') << mesh
+File("results/results-%.3f-%.3f-%s-%s-%.1f/"%(d1,d2,Kin,BC, source)+'saved_v0.xml') << u0
+File("results/results-%.3f-%.3f-%s-%s-%.1f/"%(d1,d2,Kin,BC, source)+'saved_v.xml') << u
 
 normh1 = str(norm(u,'H1'))
 error_file.write(normh1)
