@@ -30,7 +30,7 @@ class RDS(NonlinearProblem):
 
 
 # Model parameters
-dT = 0.02  # time step
+dT = 0.03  # time step
 dt = Constant(dT)
 theta  = 0.5      # time stepping family; theta=1 -> backward Euler, theta=0.5 -> Crank-Nicolson
 
@@ -72,7 +72,7 @@ T=float(argv[3])
 BC=argv[4]
 Kin=argv[5]
 source=float(argv[6])
-
+print(source)
 
 # Define source functions
 '''

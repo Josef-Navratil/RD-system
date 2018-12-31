@@ -8,8 +8,7 @@ import subprocess
 # Options - Kinetics: SCH (Schnackenberg 0.1,0.85), T (Thomas), F (FitzHugh-Nagumo), LLM (Liu-Liaw-Maini) 
 # Options - Sources: So (System with sources), NoSo (System without sources)
 
-RDSParam = [['4.0','32.4','800','N','SCH','So','0.0'],
-            ['4.0','32.315','800','N','SCH','So','0.0'],
+RDSParam = [['0.02','0.2','800','N','SCH','So','0.0']
             ]
 k = 0 #Counts the interations
 
@@ -17,7 +16,7 @@ k = 0 #Counts the interations
 for l in range(0,len(RDSParam)):
     #if sources run rds_fenics_sources
     if RDSParam[l][5] == 'So':
-        subprocess.call([sys.executable, 'rds_FENICS_sources.py', RDSParam[l][0], RDSParam[l][1], RDSParam[l][2], RDSParam[l][3], RDSParam[l][4],'%d'%k])
+        subprocess.call([sys.executable, 'rds_FENICS_sources.py', RDSParam[l][0], RDSParam[l][1], RDSParam[l][2], RDSParam[l][3], RDSParam[l][4], RDSParam[l][6], '%d'%k])
     #if nosources run rds_fenics_no_sources    
     elif RDSParam[l][5] == 'NoSo':
         subprocess.call([sys.executable, 'rds_FENICS_no_sources.py', RDSParam[l][0], RDSParam[l][1],RDSParam[l][2],RDSParam[l][3],RDSParam[l][4],'%d'%k])
