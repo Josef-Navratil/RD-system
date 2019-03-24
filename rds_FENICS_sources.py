@@ -6,9 +6,10 @@ from sys import argv
 from sys import exit
 from os import remove
 # Class representing the intial conditions
-class InitialConditions(Expression):
+class InitialConditions(UserExpression):
     def __init__(self, **kwargs):
-        random.seed(0.1 + MPI.rank(mpi_comm_world()))
+        random.seed(0.1 + MPI.rank(MPI.comm_world))
+        super().__init__(**kwargs)
     def eval(self, values, x):
         values[0] = 0.2*(random.random())
         values[1] = 0.2*(random.random())
@@ -37,10 +38,11 @@ theta  = 0.5      # time stepping family; theta=1 -> backward Euler, theta=0.5 -
 # Form compiler options
 parameters["form_compiler"]["optimize"]     = True
 parameters["form_compiler"]["cpp_optimize"] = True
-parameters["form_compiler"]["representation"] = "quadrature"
+parameters["form_compiler"]["representation"] = "uflacs"
 
 # Create mesh and define function spaces
 mesh = RectangleMesh(Point(0.0,0.0), Point(15.0, 10.0), 100, 80, "right/left")
+#mesh = UnitSquareMesh.create(100, 100, CellType.Type.quadrilateral)
 #mesh = UnitSquareMesh(60, 60)
 #mesh=refine(Mesh("mesh.xml"))
 V=FiniteElement("Lagrange", mesh.ufl_cell(),1)
@@ -119,8 +121,9 @@ if Kin=='SCH':
     bbb=-(a+b)*(a+b)
     L0 = d1*dt*inner(grad(v0), grad(p))*dx - dt*baa*v0*p*dx - dt*bab*w0*p*dx - 2*(a+b)*dt*v0*w0*p*dx - (b/(a+b)*(a+b))*dt*v0*v0*p*dx - dt*v0*v0*w0*p*dx
     L1 = d1*dt*inner(grad(v), grad(p))*dx - dt*baa*v*p*dx - dt*bab*w*p*dx - 2*(a+b)*dt*v*w*p*dx- (b/(a+b)*(a+b))*dt*v*v*p*dx - dt*v*v*w*p*dx
-    M0 = d2*dt*inner(grad(w0), grad(q))*dx - dt*bba*v0*q*dx - dt*bbb*w0*q*dx + 2*(a+b)*dt*v0*w0*q*dx+(b/(a+b)*(a+b))*dt*v0*v0*q*dx +dt*v0*v0*w0*q*dx +f_1*f_2*0.5*dt*(1-sign(w0))*w0*q*dx+f_10*f_3*0.5*dt*(1+sign(w0))*w0*q*dx
-    M1 = d2*dt*inner(grad(w), grad(q))*dx - dt*bba*v*q*dx - dt*bbb*w*q*dx + 2*(a+b)*dt*v*w*q*dx+ (b/(a+b)*(a+b))*dt*v*v*q*dx + dt*v*v*w*q*dx +f_1*f_2*0.5*dt*(1-sign(w))*w*q*dx+f_10*f_3*0.5*dt*(1+sign(w))*w*q*dx
+    M0 = d2*dt*inner(grad(w0), grad(q))*dx - dt*bba*v0*q*dx - dt*bbb*w0*q*dx + 2*(a+b)*dt*v0*w0*q*dx+(b/(a+b)*(a+b))*dt*v0*v0*q*dx +dt*v0*v0*w0*q*dx + f_1*f_2*0.5*dt*(w0-abs(w0))*q*dx +f_10*f_3*0.5*dt*(w0+abs(w0))*q*dx
+    #+f_1*f_2*0.5*dt*(1-sign(w0))*w0*q*dx+f_10*f_3*0.5*dt*(1+sign(w0))*w0*q*dx
+    M1 = d2*dt*inner(grad(w), grad(q))*dx - dt*bba*v*q*dx - dt*bbb*w*q*dx + 2*(a+b)*dt*v*w*q*dx+ (b/(a+b)*(a+b))*dt*v*v*q*dx + dt*v*v*w*q*dx + f_1*f_2*0.5*dt*(w-abs(w))*q*dx +f_10*f_3*0.5*dt*(w+abs(w))*q*dx #+f_1*f_2*0.5*dt*(1-sign(w))*w*q*dx+f_10*f_3*0.5*dt*(1+sign(w))*w*q*dx
     L =  v*p*dx - v0*p*dx+ w*q*dx - w0*q*dx + theta*L1 + (1-theta)*L0 + theta*M1 + (1-theta)*M0
 # FitzHugh-Nagumo Kinetics
 elif Kin=='F':
@@ -133,8 +136,8 @@ elif Kin=='F':
     # Variational form of the problem
     L0 = d1*dt*inner(grad(v0), grad(p))*dx - dt*baa*v0*p*dx - dt*bab*w0*p*dx 
     L1 = d1*dt*inner(grad(v), grad(p))*dx - dt*baa*v*p*dx - dt*bab*w*p*dx
-    M0 = d2*dt*inner(grad(w0), grad(q))*dx - dt*bba*v0*q*dx - dt*bbb*w0*q*dx+ 2*dt*v0*v0*p*dx + dt*v0*v0*v0*p*dx  +f_1*f_2*0.5*dt*(1-sign(w0))*w0*q*dx+f_10*f_3*0.5*dt*(1+sign(w0))*w0*q*dx
-    M1 = d2*dt*inner(grad(w), grad(q))*dx - dt*bba*v*q*dx - dt*bbb*w*q*dx + 2*dt*v*v*p*dx + dt*v*v*v*p*dx  +f_1*f_2*0.5*dt*(1-sign(w))*w*q*dx+f_10*f_3*0.5*dt*(1+sign(w))*w*q*dx
+    M0 = d2*dt*inner(grad(w0), grad(q))*dx - dt*bba*v0*q*dx - dt*bbb*w0*q*dx+ 2*dt*v0*v0*p*dx + dt*v0*v0*v0*p*dx  #+f_1*f_2*0.5*dt*(1-sign(w0))*w0*q*dx+f_10*f_3*0.5*dt*(1+sign(w0))*w0*q*dx
+    M1 = d2*dt*inner(grad(w), grad(q))*dx - dt*bba*v*q*dx - dt*bbb*w*q*dx + 2*dt*v*v*p*dx + dt*v*v*v*p*dx  #+f_1*f_2*0.5*dt*(1-sign(w))*w*q*dx+f_10*f_3*0.5*dt*(1+sign(w))*w*q*dx
     L =  v*p*dx - v0*p*dx+ w*q*dx - w0*q*dx + theta*L1 + (1-theta)*L0 + theta*M1 + (1-theta)*M0
 
 # Thomas kinetics
@@ -245,7 +248,7 @@ while True:
         (no_of_iterations,converged) = solver.solve()
     except:
         quit()
-    end()
+    #end()
     k+=1
     if converged:
         if float(dt) > 1e6 or k > 100000 or err < 1e-8:
